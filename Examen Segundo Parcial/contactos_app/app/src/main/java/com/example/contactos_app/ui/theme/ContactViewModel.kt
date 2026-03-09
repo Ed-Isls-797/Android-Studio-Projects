@@ -26,6 +26,10 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
     var imagePath by mutableStateOf<String?>(null)
     var isEditing by mutableStateOf(false)
 
+    // Estados de error por duplicidad
+    var isDuplicatePhone by mutableStateOf(false)
+    var isDuplicateEmail by mutableStateOf(false)
+
     // Función para limpiar el formulario
     fun resetForm() {
         id = 0
@@ -34,6 +38,8 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
         email = ""
         imagePath = null
         isEditing = false
+        isDuplicatePhone = false
+        isDuplicateEmail = false
     }
 
     fun isValidEmail(email: String): Boolean {
@@ -44,7 +50,7 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
     fun isNameValid(): Boolean = name.trim().length in 3..25
     fun isPhoneValid(): Boolean = phone.trim().length == 10 && phone.all { it.isDigit() }
 
-    fun canSave(): Boolean = isNameValid() && isPhoneValid() && isValidEmail(email)
+    fun canSave(): Boolean = isNameValid() && isPhoneValid() && isValidEmail(email) && !isDuplicatePhone && !isDuplicateEmail
 
     // Carga los datos en el estado del ViewModel
     fun loadContact(contact: Contact) {
@@ -54,6 +60,8 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
         email = contact.email
         imagePath = contact.imagePath
         isEditing = false
+        isDuplicatePhone = false
+        isDuplicateEmail = false
     }
 
     // Guarda una copia de la imagen en el almacenamiento interno de la app
@@ -75,19 +83,24 @@ class ContactViewModel(private val repository: ContactRepository) : ViewModel() 
         }
     }
 
-    // Función Guardar (Crea o Actualiza)
+    // Función Guardar (Crea o Actualiza) con chequeo de duplicados
     fun saveContact(onSuccess: () -> Unit) {
         if (!canSave()) return
 
-        val contact = Contact(id = id, name = name, phone = phone, email = email, imagePath = imagePath)
-
         viewModelScope.launch {
-            if (isEditing) {
-                repository.update(contact)
-            } else {
-                repository.insert(contact)
+            // Verificar duplicados antes de proceder
+            isDuplicatePhone = repository.isPhoneInUse(phone, id)
+            isDuplicateEmail = repository.isEmailInUse(email, id)
+
+            if (!isDuplicatePhone && !isDuplicateEmail) {
+                val contact = Contact(id = id, name = name, phone = phone, email = email, imagePath = imagePath)
+                if (isEditing) {
+                    repository.update(contact)
+                } else {
+                    repository.insert(contact)
+                }
+                onSuccess()
             }
-            onSuccess()
         }
     }
 

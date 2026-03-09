@@ -115,12 +115,17 @@ fun ContactFormScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     val nameError = !viewModel.isNameValid()
-                    val phoneError = !viewModel.isPhoneValid()
+                    val phoneError = !viewModel.isPhoneValid() || viewModel.isDuplicatePhone
+                    val emailError = (!viewModel.isValidEmail(viewModel.email) && viewModel.email.isNotEmpty()) || viewModel.isDuplicateEmail
 
                     // Campo Nombre
                     OutlinedTextField(
                         value = viewModel.name,
-                        onValueChange = { if (it.length <= 25) viewModel.name = it },
+                        onValueChange = { 
+                            if (it.length <= 25) {
+                                viewModel.name = it
+                            }
+                        },
                         label = { Text("Nombre") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF3F51B5)) },
                         modifier = Modifier.fillMaxWidth(),
@@ -138,22 +143,38 @@ fun ContactFormScreen(
                     // Campo Correo
                     OutlinedTextField(
                         value = viewModel.email,
-                        onValueChange = { viewModel.email = it },
+                        onValueChange = { 
+                            viewModel.email = it
+                            viewModel.isDuplicateEmail = false // Reset error on change
+                        },
                         label = { Text("Correo") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF3F51B5)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        isError = !viewModel.isValidEmail(viewModel.email) && viewModel.email.isNotEmpty(),
+                        isError = emailError,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF3F51B5),
-                            unfocusedBorderColor = Color.Gray
-                        )
+                            focusedContainerColor = if (viewModel.isDuplicateEmail) Color(0xFFFDECEA) else Color.Transparent,
+                            unfocusedContainerColor = if (viewModel.isDuplicateEmail) Color(0xFFFDECEA) else Color.Transparent,
+                            errorContainerColor = Color(0xFFFDECEA),
+                            focusedBorderColor = if (emailError) Color(0xFFD32F2F) else Color(0xFF3F51B5),
+                            unfocusedBorderColor = if (emailError) Color(0xFFD32F2F) else Color.Gray
+                        ),
+                        supportingText = {
+                            if (viewModel.isDuplicateEmail) {
+                                Text("Este correo ya está en uso")
+                            }
+                        }
                     )
 
                     // Campo Teléfono
                     OutlinedTextField(
                         value = viewModel.phone,
-                        onValueChange = { if (it.length <= 10 && it.all { char -> char.isDigit() }) viewModel.phone = it },
+                        onValueChange = { 
+                            if (it.length <= 10 && it.all { char -> char.isDigit() }) {
+                                viewModel.phone = it
+                                viewModel.isDuplicatePhone = false // Reset error on change
+                            }
+                        },
                         label = { Text("Móvil") },
                         leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = Color(0xFF3F51B5)) },
                         modifier = Modifier.fillMaxWidth(),
@@ -166,7 +187,12 @@ fun ContactFormScreen(
                             errorContainerColor = Color(0xFFFDECEA),
                             focusedBorderColor = if (phoneError) Color(0xFFD32F2F) else Color(0xFF3F51B5),
                             unfocusedBorderColor = if (phoneError) Color(0xFFD32F2F) else Color.Gray
-                        )
+                        ),
+                        supportingText = {
+                            if (viewModel.isDuplicatePhone) {
+                                Text("Este número ya está en uso")
+                            }
+                        }
                     )
 
                     if (nameError || phoneError) {

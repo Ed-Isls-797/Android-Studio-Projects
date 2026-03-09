@@ -12,4 +12,13 @@ class ContactRepository(private val contactDao: ContactDao) {
     suspend fun delete(contact: Contact) = contactDao.deleteContact(contact)
 
     suspend fun getContactById(id: Int) = contactDao.getContactById(id)
+
+    suspend fun isPhoneInUse(phone: String, excludeId: Int): Boolean {
+        return contactDao.getContactByPhone(phone, excludeId) != null
+    }
+
+    suspend fun isEmailInUse(email: String, excludeId: Int): Boolean {
+        if (email.isBlank()) return false
+        return contactDao.getContactByEmail(email, excludeId) != null
+    }
 }

@@ -11,6 +11,12 @@ interface ContactDao {
     @Query("SELECT * FROM contacts_table WHERE id = :id")
     suspend fun getContactById(id: Int): Contact?
 
+    @Query("SELECT * FROM contacts_table WHERE phone = :phone AND id != :excludeId LIMIT 1")
+    suspend fun getContactByPhone(phone: String, excludeId: Int): Contact?
+
+    @Query("SELECT * FROM contacts_table WHERE email = :email AND id != :excludeId AND email != '' LIMIT 1")
+    suspend fun getContactByEmail(email: String, excludeId: Int): Contact?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertContact(contact: Contact)
 
