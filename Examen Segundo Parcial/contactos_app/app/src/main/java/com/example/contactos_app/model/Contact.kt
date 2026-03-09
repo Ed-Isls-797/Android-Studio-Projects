@@ -1,0 +1,13 @@
+package com.example.contactos_app.model
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "contacts_table")
+data class Contact(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val name: String,
+    val phone: String,
+    val email: String,
+    val imagePath: String? = null
+)
